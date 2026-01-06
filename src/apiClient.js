@@ -136,3 +136,106 @@ export async function getUpload(uploadId) {
   return response.json();
 }
 
+// User Management (Admin only)
+export async function getUsers() {
+  const response = await fetch(`${API_BASE}/users`, {
+    method: 'GET',
+    headers: getHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function getUser(userId) {
+  const response = await fetch(`${API_BASE}/users/${userId}`, {
+    method: 'GET',
+    headers: getHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function createUser(username, role = 'USER') {
+  const response = await fetch(`${API_BASE}/users/create`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({ username, role })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function updateUser(userId, updates) {
+  const response = await fetch(`${API_BASE}/users/${userId}`, {
+    method: 'PUT',
+    headers: getHeaders(),
+    body: JSON.stringify(updates)
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function deleteUser(userId) {
+  const response = await fetch(`${API_BASE}/users/${userId}`, {
+    method: 'DELETE',
+    headers: getHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export async function resetUserPassword(userId) {
+  const response = await fetch(`${API_BASE}/users/${userId}/reset-password`, {
+    method: 'POST',
+    headers: getHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+export function getUserRole() {
+  const token = getToken();
+  if (!token) return null;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return payload.role;
+  } catch {
+    return null;
+  }
+}
+
+export function isAdmin() {
+  return getUserRole() === 'ADMIN';
+}
+

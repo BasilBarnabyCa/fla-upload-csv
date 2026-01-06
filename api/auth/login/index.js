@@ -1,9 +1,9 @@
 import { app } from '@azure/functions';
-import { handleCORS } from '../shared/cors.js';
-import { verifyPassword, getUserByUsername } from '../shared/users.js';
-import { generateToken } from '../shared/jwt.js';
-import { handleError, ValidationError } from '../shared/errors.js';
-import { logAuditEvent } from '../shared/audit.js';
+import { handleCORS } from '../../shared/cors.js';
+import { verifyPassword, getUserByUsername } from '../../shared/users.js';
+import { generateToken } from '../../shared/jwt.js';
+import { handleError, ValidationError } from '../../shared/errors.js';
+import { logAuditEvent } from '../../shared/audit.js';
 
 app.http('auth_login', {
   methods: ['POST', 'OPTIONS'],

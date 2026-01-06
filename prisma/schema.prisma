@@ -48,6 +48,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   isActive  Boolean  @default(true)
+  protected Boolean  @default(false)
 
   uploadSessions UploadSession[]
 
@@ -58,6 +59,7 @@ model User {
 enum UserRole {
   USER
   ADMIN
+  SUPERADMIN
 }
 
 model AuditLog {
@@ -90,5 +92,8 @@ enum AuditAction {
   LOGIN_SUCCESS
   LOGIN_FAILED
   USER_CREATED
+  USER_UPDATED
+  USER_DELETED
+  USER_PASSWORD_RESET
 }
 

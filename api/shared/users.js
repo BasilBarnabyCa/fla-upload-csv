@@ -1,5 +1,35 @@
 import argon2 from 'argon2';
+import crypto from 'crypto';
 import { getPrismaClient } from './prisma.js';
+
+/**
+ * Generate a secure random password
+ * @param {number} length - Password length (default: 16)
+ * @returns {string} Generated password
+ */
+export function generatePassword(length = 16) {
+  // Use alphanumeric + special characters for strong passwords
+  const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+  const numbers = '0123456789';
+  const special = '!@#$%^&*';
+  const allChars = uppercase + lowercase + numbers + special;
+  
+  // Ensure at least one character from each set
+  let password = '';
+  password += uppercase[crypto.randomInt(uppercase.length)];
+  password += lowercase[crypto.randomInt(lowercase.length)];
+  password += numbers[crypto.randomInt(numbers.length)];
+  password += special[crypto.randomInt(special.length)];
+  
+  // Fill the rest randomly
+  for (let i = password.length; i < length; i++) {
+    password += allChars[crypto.randomInt(allChars.length)];
+  }
+  
+  // Shuffle the password to avoid predictable patterns
+  return password.split('').sort(() => crypto.randomInt(3) - 1).join('');
+}
 
 /**
  * Hash a password using Argon2
@@ -50,13 +80,19 @@ export async function getUserByUsername(username) {
 
 /**
  * Create a new user
+ * @param {string} username - Username
+ * @param {string|null} password - Password (if null, will be auto-generated)
+ * @param {string} role - User role (default: 'USER')
+ * @returns {Promise<{user: object, password: string}>} Created user and password (plaintext for display)
  */
-export async function createUser(username, password, role = 'USER') {
+export async function createUser(username, password = null, role = 'USER') {
   const prisma = getPrismaClient();
   
-  const passwordHash = await hashPassword(password);
+  // Generate password if not provided
+  const plainPassword = password || generatePassword(16);
+  const passwordHash = await hashPassword(plainPassword);
   
-  return await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       username: username.toLowerCase(),
       passwordHash,
@@ -65,6 +101,11 @@ export async function createUser(username, password, role = 'USER') {
     },
     select: { id: true, username: true, role: true, createdAt: true }
   });
+  
+  return {
+    user,
+    password: plainPassword // Return plaintext password for display
+  };
 }
 
 /**
@@ -96,12 +137,87 @@ export async function userExists(username) {
 
 /**
  * Get all users (for admin purposes)
+ * @param {string} requestingUserRole - Role of the user making the request
+ * @returns {Promise<Array>} List of users (SUPERADMIN users hidden unless requester is SUPERADMIN)
  */
-export async function getAllUsers() {
+export async function getAllUsers(requestingUserRole = 'USER') {
   const prisma = getPrismaClient();
+  
+  // Build where clause - hide SUPERADMIN users unless requester is SUPERADMIN
+  const where = requestingUserRole === 'SUPERADMIN' 
+    ? {} 
+    : { role: { not: 'SUPERADMIN' } };
+  
   return await prisma.user.findMany({
-    select: { id: true, username: true, isActive: true, createdAt: true },
+    where,
+    select: { id: true, username: true, role: true, isActive: true, protected: true, createdAt: true },
     orderBy: { createdAt: 'desc' }
+  });
+}
+
+/**
+ * Get user by ID
+ */
+export async function getUserById(userId) {
+  const prisma = getPrismaClient();
+  return await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      username: true,
+      role: true,
+      isActive: true,
+      protected: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+}
+
+/**
+ * Update user (role, isActive, password)
+ */
+export async function updateUser(userId, updates) {
+  const prisma = getPrismaClient();
+  
+  const updateData = {};
+  if (updates.role !== undefined) {
+    updateData.role = updates.role;
+  }
+  if (updates.isActive !== undefined) {
+    updateData.isActive = updates.isActive;
+  }
+  if (updates.password) {
+    updateData.passwordHash = await hashPassword(updates.password);
+  }
+  
+  return await prisma.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: {
+      id: true,
+      username: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+      updatedAt: true
+    }
+  });
+}
+
+/**
+ * Delete user (soft delete by setting isActive=false)
+ */
+export async function deleteUser(userId) {
+  const prisma = getPrismaClient();
+  return await prisma.user.update({
+    where: { id: userId },
+    data: { isActive: false },
+    select: {
+      id: true,
+      username: true,
+      isActive: true
+    }
   });
 }
 

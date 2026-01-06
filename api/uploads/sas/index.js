@@ -1,12 +1,12 @@
 import { app } from '@azure/functions';
-import { validateAuth } from '../shared/auth.js';
-import { getUserByUsername } from '../shared/users.js';
-import { handleCORS } from '../shared/cors.js';
-import { validateUploadRequest } from '../shared/validate.js';
-import { generateBlobPath, generateSASUrl } from '../shared/blob.js';
-import { getPrismaClient } from '../shared/prisma.js';
-import { logAuditEvent } from '../shared/audit.js';
-import { handleError } from '../shared/errors.js';
+import { validateAuth } from '../../shared/auth.js';
+import { getUserByUsername } from '../../shared/users.js';
+import { handleCORS } from '../../shared/cors.js';
+import { validateUploadRequest } from '../../shared/validate.js';
+import { generateBlobPath, generateSASUrl } from '../../shared/blob.js';
+import { getPrismaClient } from '../../shared/prisma.js';
+import { logAuditEvent } from '../../shared/audit.js';
+import { handleError } from '../../shared/errors.js';
 
 app.http('uploads_sas', {
   methods: ['POST', 'OPTIONS'],

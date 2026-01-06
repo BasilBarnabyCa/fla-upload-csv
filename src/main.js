@@ -4,7 +4,8 @@ import App from './App.vue';
 import './style.css';
 import UploadCsv from './pages/UploadCsv.vue';
 import Login from './pages/Login.vue';
-import { isAuthenticated } from './apiClient.js';
+import Users from './pages/Users.vue';
+import { isAuthenticated, isAdmin } from './apiClient.js';
 
 const routes = [
   { 
@@ -16,6 +17,11 @@ const routes = [
     path: '/', 
     component: UploadCsv,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/users',
+    component: Users,
+    meta: { requiresAuth: true, requiresAdmin: true }
   }
 ];
 
@@ -27,6 +33,8 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated()) {
     next('/login');
+  } else if (to.meta.requiresAdmin && !isAdmin()) {
+    next('/');
   } else if (to.path === '/login' && isAuthenticated()) {
     next('/');
   } else {

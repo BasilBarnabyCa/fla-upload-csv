@@ -1,9 +1,9 @@
 import { app } from '@azure/functions';
-import { handleCORS } from '../shared/cors.js';
-import { validateAuth } from '../shared/auth.js';
-import { createUser, userExists } from '../shared/users.js';
-import { handleError, ValidationError, ForbiddenError } from '../shared/errors.js';
-import { logAuditEvent } from '../shared/audit.js';
+import { handleCORS } from '../../shared/cors.js';
+import { validateAuth } from '../../shared/auth.js';
+import { createUser, userExists } from '../../shared/users.js';
+import { handleError, ValidationError, ForbiddenError } from '../../shared/errors.js';
+import { logAuditEvent } from '../../shared/audit.js';
 
 app.http('users_create', {
   methods: ['POST', 'OPTIONS'],
@@ -17,10 +17,10 @@ app.http('users_create', {
         return corsResult;
       }
 
-      // Validate auth (require ADMIN role)
+      // Validate auth (require ADMIN or SUPERADMIN role)
       const tokenPayload = validateAuth(request);
       
-      if (tokenPayload.role !== 'ADMIN') {
+      if (tokenPayload.role !== 'ADMIN' && tokenPayload.role !== 'SUPERADMIN') {
         throw new ForbiddenError('Only administrators can create users');
       }
 
@@ -32,24 +32,25 @@ app.http('users_create', {
         throw new ValidationError('Invalid JSON in request body');
       }
 
-      const { username, password, role = 'USER' } = body;
+      const { username, role = 'USER' } = body;
 
       if (!username || typeof username !== 'string' || username.length < 3) {
         throw new ValidationError('Username must be at least 3 characters');
       }
 
-      if (!password || typeof password !== 'string' || password.length < 8) {
-        throw new ValidationError('Password must be at least 8 characters');
-      }
-
       // Validate role
-      if (role !== 'USER' && role !== 'ADMIN') {
-        throw new ValidationError('Role must be USER or ADMIN');
+      if (role !== 'USER' && role !== 'ADMIN' && role !== 'SUPERADMIN') {
+        throw new ValidationError('Role must be USER, ADMIN, or SUPERADMIN');
       }
 
       // Only admins can create other admins
-      if (role === 'ADMIN' && tokenPayload.role !== 'ADMIN') {
+      if (role === 'ADMIN' && tokenPayload.role !== 'ADMIN' && tokenPayload.role !== 'SUPERADMIN') {
         throw new ForbiddenError('Only administrators can create admin users');
+      }
+
+      // Only SUPERADMIN can create SUPERADMIN users
+      if (role === 'SUPERADMIN' && tokenPayload.role !== 'SUPERADMIN') {
+        throw new ForbiddenError('Only super administrators can create SUPERADMIN users');
       }
 
       // Check if user already exists
@@ -57,8 +58,12 @@ app.http('users_create', {
         throw new ValidationError('Username already exists');
       }
 
-      // Create user
-      const user = await createUser(username, password, role);
+      // Auto-protect "admin" username
+      const isAdminUsername = username.toLowerCase() === 'admin';
+      const shouldProtect = isAdminUsername;
+
+      // Create user (password will be auto-generated)
+      const { user, password: generatedPassword } = await createUser(username, null, role, shouldProtect);
 
       // Log user creation
       await logAuditEvent({
@@ -77,6 +82,7 @@ app.http('users_create', {
           id: user.id,
           username: user.username,
           role: user.role,
+          password: generatedPassword, // Return generated password
           createdAt: user.createdAt.toISOString()
         }
       };

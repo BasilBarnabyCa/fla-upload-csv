@@ -1,10 +1,10 @@
 import { app } from '@azure/functions';
-import { validateAuth } from '../shared/auth.js';
-import { handleCORS } from '../shared/cors.js';
-import { validateCompletionRequest } from '../shared/validate.js';
-import { getPrismaClient } from '../shared/prisma.js';
-import { logAuditEvent } from '../shared/audit.js';
-import { handleError, ValidationError } from '../shared/errors.js';
+import { validateAuth } from '../../shared/auth.js';
+import { handleCORS } from '../../shared/cors.js';
+import { validateCompletionRequest } from '../../shared/validate.js';
+import { getPrismaClient } from '../../shared/prisma.js';
+import { logAuditEvent } from '../../shared/audit.js';
+import { handleError, ValidationError } from '../../shared/errors.js';
 
 app.http('uploads_complete', {
   methods: ['POST', 'OPTIONS'],

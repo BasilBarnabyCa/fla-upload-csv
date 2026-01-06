@@ -16,7 +16,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "create-user": "cd api && node scripts-create-user.js"
+    "create-user": "cd api && node scripts-create-user.js",
+    "create-superadmin": "cd api && node scripts-create-superadmin.js"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

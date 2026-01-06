@@ -1,8 +1,8 @@
 import { app } from '@azure/functions';
-import { validateAuth } from '../shared/auth.js';
-import { handleCORS } from '../shared/cors.js';
-import { getPrismaClient } from '../shared/prisma.js';
-import { handleError, ValidationError } from '../shared/errors.js';
+import { validateAuth } from '../../shared/auth.js';
+import { handleCORS } from '../../shared/cors.js';
+import { getPrismaClient } from '../../shared/prisma.js';
+import { handleError, ValidationError } from '../../shared/errors.js';
 
 app.http('uploads_get', {
   methods: ['GET', 'OPTIONS'],

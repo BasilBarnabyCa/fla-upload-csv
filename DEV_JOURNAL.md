@@ -1,5 +1,172 @@
 # Dev Journal - FLA CSV Upload Tool
 
+## 2026-01-06 (Evening) - User Management CRUD & Security Enhancements
+
+### 🎯 **Overview**
+Implemented comprehensive user management system with CRUD operations, role-based access control, protected users, password reset functionality, and AWS IAM-style credential export. Reorganized function structure into logical groups and added special protection for "admin" username.
+
+### ✅ **What Was Accomplished**
+
+**User Management CRUD Interface:**
+- **Full CRUD operations** - Create, Read, Update, Delete users via admin interface
+- **User list page** (`/users`) - Table view with username, role, status, creation date
+- **Create user modal** - Username + role dropdown, auto-generated 16-character passwords
+- **Edit user modal** - Update role, status, optional password change
+- **Delete confirmation** - Soft delete (sets isActive=false) with confirmation
+- **Password reset** - Generate new password and display once (AWS IAM pattern)
+- **CSV credential export** - Download credentials file matching AWS IAM format
+
+**Role-Based Access Control:**
+- **SUPERADMIN role** - Highest privilege level, can manage all users
+- **ADMIN role** - Can manage regular users, cannot see/edit SUPERADMIN users
+- **USER role** - Standard user with upload permissions
+- **Protected users** - Cannot be edited/deleted by regular admins
+- **"admin" username protection** - Special protection: only SUPERADMIN or the user itself can edit
+
+**Security Features:**
+- **Password generation** - Secure 16-character passwords with uppercase, lowercase, numbers, special chars
+- **Password shown once** - Like AWS IAM, passwords displayed once then never again
+- **CSV download** - Credentials file for secure distribution (matches AWS IAM format)
+- **Audit logging** - All user operations logged (CREATE, UPDATE, DELETE, PASSWORD_RESET)
+- **SUPERADMIN invisibility** - Regular admins cannot see SUPERADMIN users in list
+- **Self-edit protection** - Users can edit their own details (for "admin" username)
+
+**Code Organization:**
+- **Folder restructuring** - Grouped functions into `auth/`, `users/`, `uploads/` folders
+- **Cleaner structure** - Better organization matching feature areas
+- **Updated imports** - Fixed import paths for nested folder structure
+
+**Database Schema:**
+- **Protected field** - Boolean flag to mark protected users
+- **SUPERADMIN role** - Added to UserRole enum
+- **Audit actions** - Added USER_UPDATED, USER_DELETED, USER_PASSWORD_RESET
+
+### 🔧 **Technical Implementation**
+
+**User Management Endpoints:**
+- `GET /api/users` - List all users (filtered by role)
+- `GET /api/users/{id}` - Get single user details
+- `POST /api/users/create` - Create new user (auto-generates password)
+- `PUT /api/users/{id}` - Update user (role, status, password)
+- `DELETE /api/users/{id}` - Soft delete user (sets isActive=false)
+- `POST /api/users/{id}/reset-password` - Reset password (returns new password once)
+
+**Protected User Logic:**
+```javascript
+// Special protection for "admin" username
+const isAdminUser = existingUser.username.toLowerCase() === 'admin';
+const isSelfEdit = existingUser.username.toLowerCase() === tokenPayload.username.toLowerCase();
+
+if (isAdminUser && tokenPayload.role !== 'SUPERADMIN' && !isSelfEdit) {
+  throw new ForbiddenError('The admin user can only be edited by super administrators or itself');
+}
+```
+
+**Password Generation:**
+```javascript
+export function generatePassword(length = 16) {
+  // Ensures uppercase, lowercase, number, special char
+  // Shuffled to avoid predictable patterns
+}
+```
+
+**CSV Export (AWS IAM Format):**
+```javascript
+const csvContent = [
+  ['User name', 'Password', 'Access key ID', 'Secret access key', 'Console login link'],
+  [username, password, 'N/A', 'N/A', loginUrl]
+];
+```
+
+**Folder Structure:**
+```
+api/
+├── auth/
+│   └── login/
+├── users/
+│   ├── create/
+│   ├── delete/
+│   ├── get/
+│   ├── list/
+│   ├── reset_password/
+│   └── update/
+├── uploads/
+│   ├── complete/
+│   ├── get/
+│   └── sas/
+└── shared/
+```
+
+### 📋 **Files Modified**
+
+**New Files:**
+- `api/users/create/index.js` - User creation endpoint
+- `api/users/list/index.js` - List users endpoint
+- `api/users/get/index.js` - Get user endpoint
+- `api/users/update/index.js` - Update user endpoint
+- `api/users/delete/index.js` - Delete user endpoint
+- `api/users/reset_password/index.js` - Password reset endpoint
+- `api/scripts-create-superadmin.js` - Script to create super admin user
+- `src/pages/Users.vue` - User management UI page
+- `prisma/migrations/*` - Database migrations for protected field and SUPERADMIN role
+
+**Modified Files:**
+- `api/index.js` - Updated imports for new folder structure
+- `api/shared/users.js` - Added password generation, protected user functions, SUPERADMIN filtering
+- `src/apiClient.js` - Added user management API functions, CSV download helper
+- `src/main.js` - Added `/users` route with admin check
+- `src/App.vue` - Added navigation menu with Users link (admin only)
+- `prisma/schema.prisma` - Added protected field, SUPERADMIN role, new audit actions
+- `package.json` - Added `create-superadmin` script
+
+**Deleted Files:**
+- `api/manual-generate.js` - Removed (not needed, troubleshooting script)
+- `api/generate-client.js` - Removed (not needed, troubleshooting script)
+
+**Moved Files (Reorganization):**
+- `api/auth_login/` → `api/auth/login/`
+- `api/users_*/` → `api/users/*/`
+- `api/uploads_*/` → `api/uploads/*/`
+
+### 🚀 **Current Status**
+- ✅ User management CRUD fully functional
+- ✅ Role-based access control implemented
+- ✅ Protected users and SUPERADMIN role working
+- ✅ Password reset with AWS IAM-style display
+- ✅ CSV credential export functional
+- ✅ "admin" username special protection
+- ✅ Code organized into logical folders
+- ✅ All endpoints properly secured
+
+### 💡 **Key Decisions & Lessons**
+
+**Password Management:**
+- Follow AWS IAM pattern: show password once, then never again
+- Auto-generate secure passwords (16 chars, mixed character sets)
+- CSV export for bulk onboarding scenarios
+- Password reset generates new password (old one invalidated)
+
+**User Protection:**
+- Protected flag prevents accidental edits/deletes
+- "admin" username gets special protection (can self-edit)
+- SUPERADMIN users hidden from regular admins (security through obscurity)
+- Self-deletion prevented (prevents lockout)
+
+**Folder Organization:**
+- Group by feature area (auth, users, uploads) not by HTTP method
+- Makes codebase easier to navigate
+- Import paths updated to `../../shared/` for nested folders
+- Azure Functions discovers functions by folder structure
+
+**Security Best Practices:**
+- Passwords hashed with Argon2 (industry standard)
+- Passwords never stored in plaintext
+- Credentials shown once, then gone forever
+- All user operations audited
+- Role-based access enforced at API level
+
+---
+
 ## 2026-01-06 - Azure Functions v4 Programming Model Setup & Critical Fixes
 
 ### 🏗️ **ARCHITECTURE**
