@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UploadSession {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  createdBy String   @default("internal")
+  userId    String?
+  status    UploadStatus @default(PENDING)
+
+  user      User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  files     UploadFile[]
+  auditLogs AuditLog[]
+
+  @@index([createdAt])
+  @@index([userId])
+  @@map("upload_sessions")
+}
+
+model UploadFile {
+  id             String   @id @default(uuid())
+  uploadSessionId String
+  originalName   String
+  mimeType       String
+  sizeBytes      Int
+  sha256         String?  @db.VarChar(64)
+  blobPath       String
+  etag           String?
+  uploadedAt     DateTime?
+
+  uploadSession  UploadSession @relation(fields: [uploadSessionId], references: [id], onDelete: Cascade)
+
+  @@index([uploadSessionId])
+  @@map("upload_files")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique @db.VarChar(100)
+  passwordHash String @db.VarChar(255)
+  role      UserRole @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isActive  Boolean  @default(true)
+
+  uploadSessions UploadSession[]
+
+  @@index([username])
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+model AuditLog {
+  id              String   @id @default(uuid())
+  action          AuditAction
+  uploadSessionId String?
+  ipHash          String   @db.VarChar(64)
+  userAgent       String?  @db.VarChar(500)
+  createdAt       DateTime @default(now())
+  detailsJson     Json?
+
+  uploadSession   UploadSession? @relation(fields: [uploadSessionId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([uploadSessionId])
+  @@map("audit_logs")
+}
+
+enum UploadStatus {
+  PENDING
+  UPLOADED
+  FAILED
+  EXPIRED
+}
+
+enum AuditAction {
+  ISSUE_SAS
+  UPLOAD_COMPLETE
+  UPLOAD_FAILED
+  LOGIN_SUCCESS
+  LOGIN_FAILED
+  USER_CREATED
+}
+
