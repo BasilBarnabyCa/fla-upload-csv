@@ -17,12 +17,15 @@ const blobServiceClient = new BlobServiceClient(
 
 /**
  * Generate a server-controlled blob path
+ * Structure: YYYY-MM-DD/{uuid}.csv
+ * This creates date-based folders for easy organization and cleanup
  */
 export function generateBlobPath(originalName) {
-  const date = new Date().toISOString().split('T')[0];
+  const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   const uuid = crypto.randomUUID();
   const ext = originalName.substring(originalName.lastIndexOf('.'));
-  return `csv-uploads/${date}/${uuid}${ext}`;
+  // Don't include container name in path - it's already in the container
+  return `${date}/${uuid}${ext}`;
 }
 
 /**
@@ -55,5 +58,39 @@ export function generateSASUrl(blobPath) {
  */
 export function getContainerClient() {
   return blobServiceClient.getContainerClient(CONTAINER_NAME);
+}
+
+/**
+ * Delete all blobs for a specific date (optional cleanup)
+ * @param {string} date - Date in YYYY-MM-DD format (defaults to today)
+ * @returns {Promise<number>} Number of blobs deleted
+ */
+export async function deleteTodaysBlobs(date = null) {
+  const targetDate = date || new Date().toISOString().split('T')[0];
+  const prefix = `${targetDate}/`; // Path format: YYYY-MM-DD/{uuid}.csv
+  
+  const containerClient = getContainerClient();
+  let deletedCount = 0;
+  
+  try {
+    // List all blobs with today's prefix
+    const blobs = containerClient.listBlobsFlat({ prefix });
+    
+    for await (const blob of blobs) {
+      try {
+        const blobClient = containerClient.getBlobClient(blob.name);
+        await blobClient.delete();
+        deletedCount++;
+      } catch (deleteError) {
+        // Log but continue deleting others
+        console.error(`Failed to delete blob ${blob.name}:`, deleteError);
+      }
+    }
+  } catch (error) {
+    console.error('Error listing/deleting blobs:', error);
+    throw error;
+  }
+  
+  return deletedCount;
 }
 

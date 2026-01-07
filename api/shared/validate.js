@@ -1,6 +1,8 @@
 import { ValidationError } from './errors.js';
 
-const MAX_FILE_SIZE_BYTES = parseInt(process.env.MAX_FILE_SIZE_BYTES || '10485760', 10);
+// Convert MB to bytes for validation
+const MAX_FILE_SIZE_MB = parseInt(process.env.MAX_FILE_SIZE_MB || '150', 10);
+const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ALLOWED_MIME_TYPES = ['text/csv', 'application/vnd.ms-excel'];
 const ALLOWED_EXTENSIONS = ['.csv'];
 
@@ -23,7 +25,9 @@ export function validateUploadRequest(body) {
   }
 
   if (sizeBytes > MAX_FILE_SIZE_BYTES) {
-    throw new ValidationError(`File size exceeds maximum of ${MAX_FILE_SIZE_BYTES} bytes`);
+    const maxSizeMB = Math.round(MAX_FILE_SIZE_BYTES / (1024 * 1024));
+    const fileSizeMB = Math.round(sizeBytes / (1024 * 1024));
+    throw new ValidationError(`File size (${fileSizeMB}MB) exceeds maximum of ${maxSizeMB}MB`);
   }
 
   if (!mimeType || typeof mimeType !== 'string') {

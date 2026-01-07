@@ -5,6 +5,8 @@ import { validateCompletionRequest } from '../../shared/validate.js';
 import { getPrismaClient } from '../../shared/prisma.js';
 import { logAuditEvent } from '../../shared/audit.js';
 import { handleError, ValidationError } from '../../shared/errors.js';
+import { getContainerClient } from '../../shared/blob.js';
+import { validateCSV } from '../../shared/csvValidator.js';
 
 app.http('uploads_complete', {
   methods: ['POST', 'OPTIONS'],
@@ -50,6 +52,58 @@ app.http('uploads_complete', {
       const uploadFile = uploadSession.files[0];
       if (!uploadFile) {
         throw new ValidationError('Upload file not found');
+      }
+
+      // Validate CSV file from blob storage (for large files or all files)
+      let blobClient = null;
+      try {
+        const containerClient = getContainerClient();
+        blobClient = containerClient.getBlobClient(uploadFile.blobPath);
+        const downloadResponse = await blobClient.download();
+        const buffer = await streamToBuffer(downloadResponse.readableStreamBody);
+        const validationResult = validateCSV(buffer, uploadFile.originalName);
+        
+        if (!validationResult.valid) {
+          // Delete invalid blob file
+          try {
+            await blobClient.delete();
+            context.log(`Deleted invalid blob: ${uploadFile.blobPath}`);
+          } catch (deleteError) {
+            context.log(`Warning: Could not delete invalid blob: ${deleteError.message}`);
+          }
+          
+          // Mark as failed if validation fails
+          await prisma.uploadSession.update({
+            where: { id: uploadId },
+            data: {
+              status: 'FAILED'
+            }
+          });
+          
+          // Limit error message length (show first 10 errors + count)
+          const errorCount = validationResult.errors.length;
+          const displayedErrors = validationResult.errors.slice(0, 10);
+          const errorMessage = errorCount > 10
+            ? `${displayedErrors.join('; ')} ... and ${errorCount - 10} more errors`
+            : validationResult.errors.join('; ');
+          
+          throw new ValidationError(`CSV validation failed (${errorCount} error${errorCount !== 1 ? 's' : ''}): ${errorMessage}`);
+        }
+      } catch (validationError) {
+        if (validationError instanceof ValidationError) {
+          // Ensure blob is deleted on validation failure
+          if (blobClient) {
+            try {
+              await blobClient.delete();
+              context.log(`Deleted invalid blob after validation error: ${uploadFile.blobPath}`);
+            } catch (deleteError) {
+              // Ignore delete errors
+            }
+          }
+          throw validationError;
+        }
+        // If blob doesn't exist yet or other error, continue (might be timing issue)
+        context.log('Warning: Could not validate CSV from blob:', validationError.message);
       }
 
       // Update file and session
@@ -112,4 +166,20 @@ app.http('uploads_complete', {
     }
   }
 });
+
+/**
+ * Convert a readable stream to a buffer
+ */
+async function streamToBuffer(readableStream) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    readableStream.on('data', (data) => {
+      chunks.push(data instanceof Buffer ? data : Buffer.from(data));
+    });
+    readableStream.on('end', () => {
+      resolve(Buffer.concat(chunks));
+    });
+    readableStream.on('error', reject);
+  });
+}
 

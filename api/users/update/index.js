@@ -8,7 +8,7 @@ import { logAuditEvent } from '../../shared/audit.js';
 app.http('users_update', {
   methods: ['PUT', 'OPTIONS'],
   authLevel: 'anonymous',
-  route: 'users/{id}',
+  route: 'users/update/{id}',
   handler: async (request, context) => {
     try {
       const corsResult = handleCORS(request);

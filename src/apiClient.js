@@ -50,6 +50,40 @@ function getHeaders() {
   return headers;
 }
 
+/**
+ * Validate CSV file before upload
+ * @param {File} file - File object to validate
+ * @returns {Promise<Object>} Validation result with errors, warnings, and suggested filename
+ */
+export async function validateCSVFile(file) {
+  // Read file as base64
+  const fileContent = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // reader.result contains data URL (data:text/csv;base64,...)
+      resolve(reader.result);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const response = await fetch(`${API_BASE}/uploads/validate`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify({
+      fileContent,
+      filename: file.name
+    })
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
 export async function requestSAS(originalName, sizeBytes, mimeType) {
   const response = await fetch(`${API_BASE}/uploads/sas`, {
     method: 'POST',
@@ -81,12 +115,22 @@ export async function uploadToBlob(file, sasUrl, onProgress) {
           etag: xhr.getResponseHeader('ETag')?.replace(/"/g, '') || null
         });
       } else {
-        reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+        // Check for CORS error
+        if (xhr.status === 0) {
+          reject(new Error('Upload failed: CORS error. Please configure CORS on your Azure Storage Account. See docs/AZURE_SETUP.md for instructions.'));
+        } else {
+          reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+        }
       }
     });
 
-    xhr.addEventListener('error', () => {
-      reject(new Error('Upload failed: network error'));
+    xhr.addEventListener('error', (e) => {
+      // Check if it's a CORS error
+      if (xhr.status === 0 || xhr.readyState === 0) {
+        reject(new Error('Upload failed: CORS error. Please configure CORS on your Azure Storage Account to allow requests from your origin. See docs/AZURE_SETUP.md for instructions.'));
+      } else {
+        reject(new Error(`Upload failed: network error (${xhr.status})`));
+      }
     });
 
     xhr.addEventListener('abort', () => {
@@ -136,6 +180,41 @@ export async function getUpload(uploadId) {
   return response.json();
 }
 
+/**
+ * Check if there are existing uploads for today
+ */
+export async function checkTodaysUploads() {
+  const response = await fetch(`${API_BASE}/uploads/check-today`, {
+    method: 'GET',
+    headers: getHeaders()
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
+/**
+ * Delete all uploads for today (or specified date)
+ */
+export async function deleteTodaysUploads(date = null) {
+  const response = await fetch(`${API_BASE}/uploads/delete-today`, {
+    method: 'POST',
+    headers: getHeaders(),
+    body: JSON.stringify(date ? { date } : {})
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+
+  return response.json();
+}
+
 // User Management (Admin only)
 export async function getUsers() {
   const response = await fetch(`${API_BASE}/users`, {
@@ -152,7 +231,7 @@ export async function getUsers() {
 }
 
 export async function getUser(userId) {
-  const response = await fetch(`${API_BASE}/users/${userId}`, {
+  const response = await fetch(`${API_BASE}/users/get/${userId}`, {
     method: 'GET',
     headers: getHeaders()
   });
@@ -181,7 +260,7 @@ export async function createUser(username, role = 'USER') {
 }
 
 export async function updateUser(userId, updates) {
-  const response = await fetch(`${API_BASE}/users/${userId}`, {
+  const response = await fetch(`${API_BASE}/users/update/${userId}`, {
     method: 'PUT',
     headers: getHeaders(),
     body: JSON.stringify(updates)
@@ -196,7 +275,7 @@ export async function updateUser(userId, updates) {
 }
 
 export async function deleteUser(userId) {
-  const response = await fetch(`${API_BASE}/users/${userId}`, {
+  const response = await fetch(`${API_BASE}/users/delete/${userId}`, {
     method: 'DELETE',
     headers: getHeaders()
   });
@@ -236,6 +315,20 @@ export function getUserRole() {
 }
 
 export function isAdmin() {
-  return getUserRole() === 'ADMIN';
+  const role = getUserRole();
+  return role === 'ADMIN' || role === 'SUPERADMIN';
+}
+
+export async function getAuditLogs(queryParams = '') {
+  const url = `${API_BASE}/audit/list${queryParams ? `?${queryParams}` : ''}`;
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: getHeaders()
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: { message: 'Unknown error' } }));
+    throw new Error(error.error?.message || `HTTP ${response.status}`);
+  }
+  return response.json();
 }
 

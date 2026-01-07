@@ -8,7 +8,7 @@ import { logAuditEvent } from '../../shared/audit.js';
 app.http('users_delete', {
   methods: ['DELETE', 'OPTIONS'],
   authLevel: 'anonymous',
-  route: 'users/{id}',
+  route: 'users/delete/{id}',
   handler: async (request, context) => {
     try {
       const corsResult = handleCORS(request);

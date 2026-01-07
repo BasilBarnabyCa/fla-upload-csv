@@ -17,7 +17,7 @@ Internal web tool for uploading CSV files to Azure Blob Storage without requirin
 - Origin + CORS lock (SWA origin only)
 - Write-only, short-lived SAS tokens (5-10 min expiry)
 - Server-controlled blob paths (never trust user filenames)
-- CSV-only uploads with size limits (default 10MB)
+- CSV-only uploads with size limits (default 150MB)
 - PII-safe audit logging (login attempts tracked)
 
 ## Development Setup
@@ -106,7 +106,7 @@ The frontend will be available at `http://localhost:5173` and will proxy API cal
 - `JWT_SECRET` - Secret key for signing JWT tokens (use `openssl rand -hex 32`)
 - `JWT_EXPIRY_HOURS` - Token expiry in hours (default: 24)
 - `ALLOWED_ORIGINS` - Comma-separated list of allowed origins
-- `MAX_FILE_SIZE_BYTES` - Max file size (default: 10485760 = 10MB)
+- `MAX_FILE_SIZE_MB` - Max file size in MB (default: 150)
 - `SAS_EXPIRY_MINUTES` - SAS token expiry (default: 10)
 
 See `env.example.txt` for a complete reference.

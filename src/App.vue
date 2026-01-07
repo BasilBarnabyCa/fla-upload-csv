@@ -20,6 +20,14 @@
             >
               Users
             </router-link>
+            <router-link
+              v-if="isAdmin()"
+              to="/audit"
+              class="text-sm text-gray-600 hover:text-gray-900 focus:outline-none"
+              active-class="text-blue-600 font-medium"
+            >
+              Audit Trail
+            </router-link>
           </nav>
         </div>
         <button

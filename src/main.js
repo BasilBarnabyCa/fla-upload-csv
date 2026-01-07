@@ -5,6 +5,7 @@ import './style.css';
 import UploadCsv from './pages/UploadCsv.vue';
 import Login from './pages/Login.vue';
 import Users from './pages/Users.vue';
+import AuditTrail from './pages/AuditTrail.vue';
 import { isAuthenticated, isAdmin } from './apiClient.js';
 
 const routes = [
@@ -21,6 +22,11 @@ const routes = [
   {
     path: '/users',
     component: Users,
+    meta: { requiresAuth: true, requiresAdmin: true }
+  },
+  {
+    path: '/audit',
+    component: AuditTrail,
     meta: { requiresAuth: true, requiresAdmin: true }
   }
 ];

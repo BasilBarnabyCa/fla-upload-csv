@@ -7,7 +7,7 @@ import { handleError, ValidationError, ForbiddenError } from '../../shared/error
 app.http('users_get', {
   methods: ['GET', 'OPTIONS'],
   authLevel: 'anonymous',
-  route: 'users/{id}',
+  route: 'users/get/{id}',
   handler: async (request, context) => {
     try {
       const corsResult = handleCORS(request);
