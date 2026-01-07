@@ -4,6 +4,9 @@
   "description": "Azure Functions for CSV upload tool",
   "type": "module",
   "main": "startup.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "start": "./node_modules/.bin/func start --typescript false --javascript",
     "prisma:generate": "prisma generate --schema=../prisma/schema.prisma",
