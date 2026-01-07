@@ -144,15 +144,17 @@ export async function getAllUsers(requestingUserRole = 'USER') {
   const prisma = getPrismaClient();
   
   // Build where clause - hide SUPERADMIN users unless requester is SUPERADMIN
-  const where = requestingUserRole === 'SUPERADMIN' 
-    ? {} 
-    : { role: { not: 'SUPERADMIN' } };
-  
-  return await prisma.user.findMany({
-    where,
+  // Fetch all and filter in JS to avoid enum import issues
+  const allUsers = await prisma.user.findMany({
     select: { id: true, username: true, role: true, isActive: true, protected: true, createdAt: true },
     orderBy: { createdAt: 'desc' }
   });
+  
+  if (requestingUserRole !== 'SUPERADMIN') {
+    return allUsers.filter(user => user.role !== 'SUPERADMIN');
+  }
+  
+  return allUsers;
 }
 
 /**
