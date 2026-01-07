@@ -1,5 +1,6 @@
 {
   "version": "2.0",
+  "language": "javascript",
   "logging": {
     "applicationInsights": {
       "samplingSettings": {
