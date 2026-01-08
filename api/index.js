@@ -16,4 +16,5 @@ import './uploads/complete/index.js';
 import './uploads/check_today/index.js';
 import './uploads/delete_today/index.js';
 import './audit/list/index.js';
+import './health/db/index.js'; // Database health check
 
