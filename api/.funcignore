@@ -1,0 +1,47 @@
+# Azure Functions ignore file
+# Exclude node_modules - dependencies are installed during build
+node_modules/
+
+# Exclude development files
+*.log
+*.md
+.DS_Store
+.env
+.env.local
+.env.*.local
+
+# Exclude scripts (not needed in production)
+scripts-*.js
+
+# Exclude local settings (use environment variables in Azure)
+local.settings.json
+local.settings.json.example
+
+# Exclude test files
+*.test.js
+*.spec.js
+__tests__/
+test/
+
+# Exclude IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Exclude git files
+.git/
+.gitignore
+
+# Exclude Prisma files (schema is in parent directory, client is generated)
+prisma/
+*.prisma
+
+# Keep only what's needed:
+# - index.js files (function handlers)
+# - startup.js (entry point)
+# - shared/ (shared modules)
+# - host.json (configuration)
+# - package.json (dependencies list)
+
