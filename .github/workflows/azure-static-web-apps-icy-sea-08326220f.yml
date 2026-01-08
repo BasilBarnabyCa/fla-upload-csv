@@ -41,6 +41,12 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: Prepare API for deployment (remove node_modules)
+        run: |
+          cd api
+          rm -rf node_modules
+          rm -rf .oryx_*
+
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
