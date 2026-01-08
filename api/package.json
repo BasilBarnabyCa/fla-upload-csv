@@ -18,10 +18,10 @@
     "@azure/storage-blob": "^12.17.0",
     "@prisma/client": "^5.22.0",
     "argon2": "^0.31.2",
-    "jsonwebtoken": "^9.0.2"
+    "jsonwebtoken": "^9.0.2",
+    "prisma": "^5.22.0"
   },
   "devDependencies": {
-    "azure-functions-core-tools": "^4.6.0",
-    "prisma": "^5.22.0"
+    "azure-functions-core-tools": "^4.6.0"
   }
 }
