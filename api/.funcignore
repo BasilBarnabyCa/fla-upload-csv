@@ -1,10 +1,7 @@
 # Azure Functions ignore file
-# Exclude node_modules - Azure will install dependencies at runtime
-node_modules
-node_modules/
-**/node_modules
-**/node_modules/**
+# Exclude development files only - Azure needs node_modules at runtime
 *.log
+*.md
 
 # Exclude development files
 *.log
