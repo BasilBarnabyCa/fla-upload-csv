@@ -1,6 +1,8 @@
 # Azure Functions ignore file
 # Exclude node_modules - dependencies are installed during build
-node_modules/
+node_modules
+node_modules/**
+*.log
 
 # Exclude development files
 *.log
