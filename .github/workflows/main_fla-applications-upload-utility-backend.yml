@@ -26,8 +26,13 @@ jobs:
       - name: npm install and generate Prisma
         run: |
           cd backend
-          npm ci
-          npx prisma generate --schema=./prisma/schema.prisma
+          npm install
+          npx prisma generate
+
+      - name: Remove node_modules (Azure will reinstall)
+        run: |
+          cd backend
+          rm -rf node_modules
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4

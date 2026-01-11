@@ -7,7 +7,7 @@
  * Requires DATABASE_URL environment variable
  */
 
-import pkg from '@prisma/client';
+import pkg from './generated/prisma/index.js';
 const { PrismaClient } = pkg;
 import argon2 from 'argon2';
 import crypto from 'crypto';

@@ -1,12 +1,11 @@
 import express from 'express';
-import { getPrismaClient } from '../shared/prisma.js';
+import prisma from '../shared/db.js';
 import { handleError } from '../shared/errors.js';
 
 const router = express.Router();
 
 router.get('/db', async (req, res) => {
   try {
-    const prisma = getPrismaClient();
     
     await prisma.$queryRaw`SELECT 1`;
     

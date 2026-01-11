@@ -3,7 +3,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { getUserByUsername } from '../shared/users.js';
 import { validateUploadRequest, validateCompletionRequest } from '../shared/validate.js';
 import { generateBlobPath, generateSASUrl, getContainerClient } from '../shared/blob.js';
-import { getPrismaClient } from '../shared/prisma.js';
+import prisma from '../shared/db.js';
 import { logAuditEvent } from '../shared/audit.js';
 import { handleError, ValidationError } from '../shared/errors.js';
 import { validateCSV } from '../shared/csvValidator.js';
@@ -71,7 +71,6 @@ router.post('/sas', async (req, res) => {
     const blobPath = generateBlobPath(originalName);
     const { sasUrl, expiresAt } = generateSASUrl(blobPath);
 
-    const prisma = getPrismaClient();
     const uploadSession = await prisma.uploadSession.create({
       data: {
         status: 'PENDING',
@@ -119,7 +118,6 @@ router.post('/sas', async (req, res) => {
 // Get upload by ID
 router.get('/:id', async (req, res) => {
   try {
-    const prisma = getPrismaClient();
     const uploadSession = await prisma.uploadSession.findUnique({
       where: { id: req.params.id },
       include: {
@@ -159,7 +157,6 @@ router.post('/complete', async (req, res) => {
     const { uploadId, etag, sha256 } = validateCompletionRequest(req.body);
     uploadIdForAudit = uploadId;
 
-    const prisma = getPrismaClient();
     const uploadSession = await prisma.uploadSession.findUnique({
       where: { id: uploadId },
       include: { files: true }
@@ -280,7 +277,6 @@ router.post('/complete', async (req, res) => {
 // Check today's uploads
 router.get('/check/today', async (req, res) => {
   try {
-    const prisma = getPrismaClient();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
@@ -323,7 +319,6 @@ router.get('/check/today', async (req, res) => {
 // Delete today's uploads
 router.delete('/today', async (req, res) => {
   try {
-    const prisma = getPrismaClient();
     const containerClient = getContainerClient();
     
     const today = new Date();

@@ -1,4 +1,4 @@
-import { getPrismaClient } from './prisma.js';
+import prisma from './db.js';
 import { hashIP } from './hash.js';
 
 /**
@@ -10,7 +10,6 @@ export async function logAuditEvent({
   request,
   details = null
 }) {
-  const prisma = getPrismaClient();
   
   try {
     // Support both Express (object) and Azure Functions (Map) headers

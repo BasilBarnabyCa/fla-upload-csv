@@ -9,3 +9,4 @@ api/node_modules/
 api/.env
 api/local.settings.json
 docs/confidential/
+backend/generated/

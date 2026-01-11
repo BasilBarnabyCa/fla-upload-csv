@@ -1,6 +1,6 @@
 import argon2 from 'argon2';
 import crypto from 'crypto';
-import { getPrismaClient } from './prisma.js';
+import prisma from './db.js';
 
 /**
  * Generate a secure random password
@@ -47,7 +47,6 @@ export async function hashPassword(password) {
  * Verify password against database
  */
 export async function verifyPassword(username, password) {
-  const prisma = getPrismaClient();
   
   const user = await prisma.user.findUnique({
     where: { username: username.toLowerCase() },
@@ -71,7 +70,6 @@ export async function verifyPassword(username, password) {
  * Get user by username
  */
 export async function getUserByUsername(username) {
-  const prisma = getPrismaClient();
   return await prisma.user.findUnique({
     where: { username: username.toLowerCase() },
     select: { id: true, username: true, role: true, isActive: true, createdAt: true }
@@ -87,7 +85,6 @@ export async function getUserByUsername(username) {
  * @returns {Promise<{user: object, password: string}>} Created user and password (plaintext for display)
  */
 export async function createUser(username, password = null, role = 'USER', isProtected = false) {
-  const prisma = getPrismaClient();
   
   // Generate password if not provided
   const plainPassword = password || generatePassword(16);
@@ -114,7 +111,6 @@ export async function createUser(username, password = null, role = 'USER', isPro
  * Update user password
  */
 export async function updateUserPassword(username, newPassword) {
-  const prisma = getPrismaClient();
   
   const passwordHash = await hashPassword(newPassword);
   
@@ -129,7 +125,6 @@ export async function updateUserPassword(username, newPassword) {
  * Check if username exists
  */
 export async function userExists(username) {
-  const prisma = getPrismaClient();
   const user = await prisma.user.findUnique({
     where: { username: username.toLowerCase() },
     select: { id: true }
@@ -143,7 +138,6 @@ export async function userExists(username) {
  * @returns {Promise<Array>} List of users (SUPERADMIN users hidden unless requester is SUPERADMIN)
  */
 export async function getAllUsers(requestingUserRole = 'USER') {
-  const prisma = getPrismaClient();
   
   // Build where clause - hide SUPERADMIN users unless requester is SUPERADMIN
   // Fetch all and filter in JS to avoid enum import issues
@@ -163,7 +157,6 @@ export async function getAllUsers(requestingUserRole = 'USER') {
  * Get user by ID
  */
 export async function getUserById(userId) {
-  const prisma = getPrismaClient();
   return await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -186,7 +179,6 @@ export async function getUserById(userId) {
  * @returns {Promise<object>} Updated user
  */
 export async function updateUser(userId, updates, requestingUserRole = 'USER') {
-  const prisma = getPrismaClient();
   
   const updateData = {};
   if (updates.username !== undefined) {
@@ -221,7 +213,6 @@ export async function updateUser(userId, updates, requestingUserRole = 'USER') {
  * Delete user (soft delete by setting isActive=false)
  */
 export async function deleteUser(userId) {
-  const prisma = getPrismaClient();
   return await prisma.user.update({
     where: { id: userId },
     data: { isActive: false },
@@ -239,7 +230,6 @@ export async function deleteUser(userId) {
  * @returns {Promise<{password: string}>} New password in plaintext
  */
 export async function resetUserPassword(userId) {
-  const prisma = getPrismaClient();
   
   // Generate new password
   const newPassword = generatePassword(16);

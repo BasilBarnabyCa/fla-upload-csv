@@ -1,0 +1,16 @@
+// Database connection module - cleaner pattern
+// Import PrismaClient from custom generated location
+import pkg from '../generated/prisma/index.js';
+const { PrismaClient } = pkg;
+
+const prisma = new PrismaClient({
+  log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
+});
+
+// Graceful shutdown
+process.on('beforeExit', async () => {
+  await prisma.$disconnect();
+});
+
+export default prisma;
+

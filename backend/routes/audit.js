@@ -1,8 +1,8 @@
 import express from 'express';
 import { requireAdmin } from '../middleware/auth.js';
-import { getPrismaClient } from '../shared/prisma.js';
+import prisma from '../shared/db.js';
 import { handleError } from '../shared/errors.js';
-import pkg from '@prisma/client';
+import pkg from '../generated/prisma/index.js';
 const { Prisma } = pkg;
 
 const router = express.Router();
@@ -20,7 +20,6 @@ router.get('/list', async (req, res) => {
     const validLimit = Math.min(Math.max(limit, 1), 1000);
     const validOffset = Math.max(offset, 0);
 
-    const prisma = getPrismaClient();
     
     let auditLogs, total;
 
