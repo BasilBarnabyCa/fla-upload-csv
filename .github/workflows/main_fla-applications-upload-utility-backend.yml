@@ -66,5 +66,5 @@ jobs:
         with:
           app-name: 'fla-applications-upload-utility-backend'
           slot-name: 'Production'
-          package: .
+          package: ./backend
           
