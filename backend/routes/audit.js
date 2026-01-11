@@ -2,7 +2,8 @@ import express from 'express';
 import { requireAdmin } from '../middleware/auth.js';
 import { getPrismaClient } from '../shared/prisma.js';
 import { handleError } from '../shared/errors.js';
-import { Prisma } from '@prisma/client';
+import pkg from '@prisma/client';
+const { Prisma } = pkg;
 
 const router = express.Router();
 

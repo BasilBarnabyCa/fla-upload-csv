@@ -7,7 +7,8 @@
  * Requires DATABASE_URL environment variable
  */
 
-import { PrismaClient } from '@prisma/client';
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
 import argon2 from 'argon2';
 import crypto from 'crypto';
 import { readFileSync } from 'fs';

@@ -1,17 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+// Import PrismaClient using CommonJS-compatible pattern for ES modules
+import pkg from '@prisma/client';
+const { PrismaClient } = pkg;
 
 let prisma;
-
-// Ensure Prisma client is generated before importing
-try {
-  // This will throw if Prisma client hasn't been generated
-  if (typeof PrismaClient === 'undefined') {
-    throw new Error('PrismaClient is undefined - run prisma generate');
-  }
-} catch (error) {
-  console.error('Prisma Client initialization error:', error);
-  throw new Error('Prisma Client not initialized. Ensure prisma generate has been run.');
-}
 
 export function getPrismaClient() {
   if (!prisma) {
