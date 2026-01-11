@@ -19,7 +19,7 @@ const __dirname = dirname(__filename);
 
 // Load .env from backend directory
 try {
-  const envPath = join(__dirname, '..', 'backend', '.env');
+  const envPath = join(__dirname, '.env');
   const envFile = readFileSync(envPath, 'utf-8');
   envFile.split('\n').forEach(line => {
     const [key, ...valueParts] = line.split('=');

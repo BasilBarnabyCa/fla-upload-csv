@@ -19,7 +19,7 @@ const __dirname = dirname(__filename);
 
 // Load .env from backend directory (same approach as scripts-create-user.js)
 try {
-  const envPath = join(__dirname, '..', 'backend', '.env');
+  const envPath = join(__dirname, '.env');
   const envFile = readFileSync(envPath, 'utf-8');
   envFile.split('\n').forEach(line => {
     const [key, ...valueParts] = line.split('=');
