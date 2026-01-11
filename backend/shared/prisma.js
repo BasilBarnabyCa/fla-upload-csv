@@ -1,4 +1,5 @@
 // Import PrismaClient using CommonJS-compatible pattern for ES modules
+// Prisma v5 generates CommonJS, so we use default import pattern
 import pkg from '@prisma/client';
 const { PrismaClient } = pkg;
 
