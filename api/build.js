@@ -1,15 +1,14 @@
 #!/usr/bin/env node
 // Build script to ensure Prisma client is generated before deployment
-import { execSync } from 'child_process';
-import { existsSync } from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+const { execSync } = require('child_process');
+const { existsSync } = require('fs');
+const { join } = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// In CommonJS, __dirname is automatically available
+const apiDir = __dirname;
 
-const schemaPath = join(__dirname, '../prisma/schema.prisma');
-const clientPath = join(__dirname, 'node_modules/@prisma/client');
+const schemaPath = join(apiDir, '../prisma/schema.prisma');
+const clientPath = join(apiDir, 'node_modules/@prisma/client');
 
 console.log('Building Azure Functions API...');
 console.log(`Schema path: ${schemaPath}`);
@@ -26,7 +25,7 @@ console.log('Generating Prisma client...');
 try {
   execSync(`npx prisma generate --schema=${schemaPath}`, {
     stdio: 'inherit',
-    cwd: __dirname
+    cwd: apiDir
   });
 } catch (error) {
   console.error('Failed to generate Prisma client:', error);
