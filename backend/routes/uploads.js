@@ -129,7 +129,7 @@ router.get('/check-today', async (req, res) => {
           gte: today,
           lt: tomorrow
         },
-        status: 'COMPLETED'
+        status: 'UPLOADED'
       },
       include: {
         files: true
@@ -261,7 +261,7 @@ router.post('/complete', async (req, res) => {
       await prisma.uploadSession.update({
         where: { id: uploadId },
         data: {
-          status: 'COMPLETED',
+          status: 'UPLOADED',
           files: {
             update: {
               where: { id: uploadFile.id },
