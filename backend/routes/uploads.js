@@ -70,6 +70,9 @@ router.post('/sas', async (req, res) => {
 
     const blobPath = generateBlobPath(originalName);
     const { sasUrl, expiresAt } = generateSASUrl(blobPath);
+    
+    // expiresAt is already an ISO string from generateSASUrl
+    const expiresAtISO = typeof expiresAt === 'string' ? expiresAt : expiresAt.toISOString();
 
     const uploadSession = await prisma.uploadSession.create({
       data: {
@@ -106,10 +109,17 @@ router.post('/sas', async (req, res) => {
       uploadId: uploadSession.id,
       fileId: uploadFile.id,
       sasUrl,
-      expiresAt: expiresAt.toISOString(),
+      expiresAt: expiresAtISO,
       blobPath
     });
   } catch (error) {
+    // Log full error details for debugging
+    console.error('[uploads_sas] Full error:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      ...(error.code && { code: error.code })
+    });
     const errorResponse = handleError(error, 'uploads_sas');
     res.status(errorResponse.status || 500).json(errorResponse.jsonBody);
   }

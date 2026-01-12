@@ -44,15 +44,22 @@ export function handleError(error, context) {
   // Log unexpected errors (without secrets)
   console.error(`[${context}] Unexpected error:`, {
     message: error.message,
-    stack: error.stack?.split('\n').slice(0, 3).join('\n')
+    name: error.name,
+    stack: error.stack?.split('\n').slice(0, 5).join('\n'),
+    ...(error.code && { code: error.code }),
+    ...(error.cause && { cause: error.cause })
   });
 
+  // In development, return more details
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
   return {
     status: 500,
     jsonBody: {
       error: {
         code: 'INTERNAL_ERROR',
-        message: 'An unexpected error occurred'
+        message: isDevelopment ? error.message : 'An unexpected error occurred',
+        ...(isDevelopment && { details: error.stack?.split('\n').slice(0, 3) })
       }
     }
   };
