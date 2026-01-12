@@ -42,7 +42,7 @@
     <main class="max-w-6xl mx-auto px-4 py-8 flex-1">
       <RouterView />
     </main>
-    <footer class="bg-white border-t border-gray-200 mt-auto">
+    <footer v-if="showHeader" class="bg-white border-t border-gray-200 mt-auto">
       <div class="max-w-6xl mx-auto px-4 py-4 text-center text-sm text-gray-600">
         <p>&copy; {{ new Date().getFullYear() }} Status Portal. All rights reserved.</p>
       </div>
