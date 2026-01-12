@@ -1,5 +1,184 @@
 # Dev Journal - FLA CSV Upload Tool
 
+## 2026-01-11 - Business Timezone Implementation & App Branding Updates
+
+### 🎯 **Overview**
+Implemented business timezone support (America/Bogota, UTC-5) throughout the application, ensuring all date-based operations use Jamaica's local timezone while maintaining UTC storage in the database. Updated app branding from "FLA CSV Upload Tool" to "Application Status Updater" and fixed critical bugs in password reset CSV export and delete-today endpoint.
+
+### ✅ **What Was Accomplished**
+
+**Business Timezone Implementation:**
+- **Timezone utilities** - Created timezone helper modules for both backend and frontend
+- **Blob storage paths** - Updated to use business timezone dates (YYYY-MM-DD folders)
+- **"Today" operations** - Check and delete operations now use business timezone date
+- **CSV validator** - Suggested filename uses business timezone date
+- **Frontend displays** - All date/time displays converted to business timezone
+- **Database timestamps** - Remain in UTC (correct approach, no changes needed)
+
+**App Branding:**
+- **App name** - Changed from "FLA CSV Upload Tool" to "Application Status Updater"
+- **Login page** - Updated title and subtitle to reflect new branding
+- **Navigation** - Header updated with new app name
+
+**Bug Fixes:**
+- **Delete-today endpoint** - Fixed mismatch: frontend was calling `DELETE /uploads/today`, backend expects `POST /uploads/delete-today`
+- **Password reset CSV** - Fixed missing username in CSV filename and content (was using `result.username` which may be undefined)
+
+### 🔧 **Technical Implementation**
+
+**Timezone Utilities:**
+
+**Backend (`api/shared/timezone.js`):**
+```javascript
+const BUSINESS_TIMEZONE = 'America/Bogota'; // UTC-5 (Jamaica timezone)
+
+export function getBusinessDate(date = null) {
+  const dateObj = date ? new Date(date) : new Date();
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: BUSINESS_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  });
+  return formatter.format(dateObj); // Returns YYYY-MM-DD
+}
+
+export function getBusinessDayRange(date = null) {
+  // Returns UTC date range for business day
+  // Midnight Bogota = 05:00 UTC (UTC-5, no DST)
+  const businessDate = date || getBusinessDate();
+  const [year, month, day] = businessDate.split('-').map(Number);
+  const startUTC = new Date(Date.UTC(year, month - 1, day, 5, 0, 0));
+  const endUTC = new Date(startUTC);
+  endUTC.setUTCDate(endUTC.getUTCDate() + 1);
+  return { start: startUTC, end: endUTC };
+}
+```
+
+**Frontend (`frontend/src/utils/timezone.js`):**
+```javascript
+export function formatBusinessDateTime(date, options = {}) {
+  const dateObj = date instanceof Date ? date : new Date(date);
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Bogota',
+    ...options
+  }).format(dateObj);
+}
+```
+
+**Blob Storage Path Generation:**
+```javascript
+// api/shared/blob.js
+import { getBusinessDate } from './timezone.js';
+
+export function generateBlobPath(originalName) {
+  const date = getBusinessDate(); // Uses business timezone
+  const uuid = crypto.randomUUID();
+  return `${date}/${uuid}${ext}`;
+}
+```
+
+**"Today" Operations:**
+```javascript
+// api/uploads/check_today/index.js
+import { getBusinessDate } from '../../shared/timezone.js';
+
+const today = getBusinessDate(); // Business timezone date
+const prefix = `${today}/`;
+```
+
+**Delete-Today Endpoint Fix:**
+```javascript
+// Before: Frontend called DELETE /api/uploads/today
+// After: Frontend calls POST /api/uploads/delete-today (matches backend)
+
+// frontend/src/apiClient.js
+export async function deleteTodaysUploads(date = null) {
+  const response = await fetch(`${API_BASE}/uploads/delete-today`, {
+    method: 'POST', // Changed from DELETE
+    headers: getHeaders(),
+    body: JSON.stringify(date ? { date } : {})
+  });
+}
+```
+
+**Password Reset CSV Fix:**
+```javascript
+// frontend/src/pages/Users.vue
+async function handleResetPassword() {
+  // Store username before API call (fallback)
+  const username = userToResetPassword.value.username;
+  const role = userToResetPassword.value.role;
+  
+  const result = await resetUserPassword(userToResetPassword.value.id);
+  passwordUserInfo.value = {
+    username: result.username || username, // Fallback ensures username is always set
+    role: role
+  };
+}
+```
+
+### 📋 **Files Modified**
+
+**New Files:**
+- `api/shared/timezone.js` - Backend timezone utilities (getBusinessDate, formatBusinessDateTime, getBusinessDayRange)
+- `frontend/src/utils/timezone.js` - Frontend timezone utilities (getBusinessDate, formatBusinessDateTime, formatBusinessDate)
+
+**Modified Files:**
+- `api/shared/blob.js` - Updated `generateBlobPath()` and `deleteTodaysBlobs()` to use business timezone
+- `api/shared/csvValidator.js` - Updated suggested filename to use business timezone
+- `api/uploads/check_today/index.js` - Updated to use business timezone for "today" checks
+- `api/uploads/delete_today/index.js` - Updated to use business timezone for delete operations
+- `frontend/src/App.vue` - Changed app name to "Application Status Updater"
+- `frontend/src/apiClient.js` - Fixed delete-today endpoint URL and method
+- `frontend/src/pages/Login.vue` - Updated app name and subtitle
+- `frontend/src/pages/UploadCsv.vue` - Updated date formatting and suggested filename to use business timezone
+- `frontend/src/pages/Users.vue` - Updated date formatting and fixed password reset CSV username
+- `frontend/src/pages/AuditTrail.vue` - Updated date/time formatting to use business timezone
+
+### 🚀 **Current Status**
+- ✅ Business timezone (America/Bogota) implemented throughout application
+- ✅ Blob storage paths use business timezone dates
+- ✅ "Today" operations use business timezone
+- ✅ All frontend date displays show business timezone
+- ✅ Database timestamps remain in UTC (correct)
+- ✅ App rebranded to "Application Status Updater"
+- ✅ Delete-today endpoint fixed
+- ✅ Password reset CSV includes username in filename and content
+
+### 💡 **Key Decisions & Lessons**
+
+**Timezone Strategy:**
+- **Database storage**: Always UTC (industry standard, avoids DST issues)
+- **Business logic**: Use business timezone (America/Bogota) for date-based operations
+- **Blob paths**: Use business timezone dates for folder organization
+- **Display**: Convert UTC to business timezone for user-facing dates
+- **Rationale**: Files uploaded at 11 PM Jamaica time should go in today's folder, not tomorrow's (UTC)
+
+**America/Bogota Timezone:**
+- UTC-5 (no daylight saving time)
+- Midnight Bogota = 05:00 UTC
+- Consistent offset year-round (no DST complications)
+
+**API Endpoint Consistency:**
+- Frontend and backend must match exactly (method + route)
+- Backend route: `POST /api/uploads/delete-today`
+- Frontend must call: `POST /api/uploads/delete-today`
+- Mismatch causes "Cannot POST" errors
+
+**Password Reset CSV:**
+- Always store username before API call as fallback
+- API may not return username in all cases
+- CSV filename and content both need username
+- Use `result.username || storedUsername` pattern for reliability
+
+**App Branding:**
+- Generic name "Application Status Updater" better reflects functionality
+- More professional than "FLA CSV Upload Tool"
+- Updated consistently across all UI surfaces
+
+---
+
 ## 2026-01-06 (Evening) - User Management CRUD & Security Enhancements
 
 ### 🎯 **Overview**
