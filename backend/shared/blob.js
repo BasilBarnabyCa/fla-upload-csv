@@ -1,4 +1,5 @@
 import { BlobSASPermissions, BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters } from '@azure/storage-blob';
+import crypto from 'crypto';
 
 const ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const ACCOUNT_KEY = process.env.AZURE_STORAGE_ACCOUNT_KEY;

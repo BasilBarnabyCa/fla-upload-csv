@@ -115,6 +115,48 @@ router.post('/sas', async (req, res) => {
   }
 });
 
+// Check today's uploads (must come before /:id route)
+router.get('/check-today', async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const uploads = await prisma.uploadSession.findMany({
+      where: {
+        createdAt: {
+          gte: today,
+          lt: tomorrow
+        },
+        status: 'COMPLETED'
+      },
+      include: {
+        files: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.json({
+      hasUploads: uploads.length > 0,
+      count: uploads.length,
+      uploads: uploads.map(upload => ({
+        id: upload.id,
+        createdAt: upload.createdAt.toISOString(),
+        files: upload.files.map(f => ({
+          originalName: f.originalName,
+          blobPath: f.blobPath
+        }))
+      }))
+    });
+  } catch (error) {
+    const errorResponse = handleError(error, 'uploads_check_today');
+    res.status(errorResponse.status || 500).json(errorResponse.jsonBody);
+  }
+});
+
 // Get upload by ID
 router.get('/:id', async (req, res) => {
   try {
@@ -270,48 +312,6 @@ router.post('/complete', async (req, res) => {
     }
   } catch (error) {
     const errorResponse = handleError(error, 'uploads_complete');
-    res.status(errorResponse.status || 500).json(errorResponse.jsonBody);
-  }
-});
-
-// Check today's uploads
-router.get('/check/today', async (req, res) => {
-  try {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const uploads = await prisma.uploadSession.findMany({
-      where: {
-        createdAt: {
-          gte: today,
-          lt: tomorrow
-        },
-        status: 'COMPLETED'
-      },
-      include: {
-        files: true
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    });
-
-    res.json({
-      hasUploads: uploads.length > 0,
-      count: uploads.length,
-      uploads: uploads.map(upload => ({
-        id: upload.id,
-        createdAt: upload.createdAt.toISOString(),
-        files: upload.files.map(f => ({
-          originalName: f.originalName,
-          blobPath: f.blobPath
-        }))
-      }))
-    });
-  } catch (error) {
-    const errorResponse = handleError(error, 'uploads_check_today');
     res.status(errorResponse.status || 500).json(errorResponse.jsonBody);
   }
 });
