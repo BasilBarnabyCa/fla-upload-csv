@@ -71,8 +71,7 @@ router.post('/sas', async (req, res) => {
     const blobPath = generateBlobPath(originalName);
     const { sasUrl, expiresAt } = generateSASUrl(blobPath);
     
-    // expiresAt is already an ISO string from generateSASUrl
-    const expiresAtISO = typeof expiresAt === 'string' ? expiresAt : expiresAt.toISOString();
+    // expiresAt is already an ISO string from generateSASUrl (don't call toISOString() again)
 
     const uploadSession = await prisma.uploadSession.create({
       data: {
