@@ -2,9 +2,10 @@
   <div class="min-h-screen bg-gray-50">
     <header v-if="showHeader" class="bg-white shadow-sm">
       <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-6">
-          <h1 class="text-2xl font-semibold text-gray-900">Application Status Updater</h1>
-          <nav class="flex space-x-4">
+        <div class="flex items-center space-x-4">
+          <img :src="logo" alt="Logo" class="h-10 w-auto" />
+          <h1 class="text-2xl font-semibold text-gray-900">Status Portal</h1>
+          <nav class="flex space-x-4 ml-6">
             <router-link
               to="/"
               class="text-sm text-gray-600 hover:text-gray-900 focus:outline-none"
@@ -38,9 +39,14 @@
         </button>
       </div>
     </header>
-    <main class="max-w-6xl mx-auto px-4 py-8">
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-1">
       <RouterView />
     </main>
+    <footer class="bg-white border-t border-gray-200 mt-auto">
+      <div class="max-w-6xl mx-auto px-4 py-4 text-center text-sm text-gray-600">
+        <p>&copy; {{ new Date().getFullYear() }} Status Portal. All rights reserved.</p>
+      </div>
+    </footer>
   </div>
 </template>
 
@@ -48,6 +54,7 @@
 import { computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { logout, isAuthenticated, isAdmin } from './apiClient.js';
+import logo from './assets/logo.png';
 
 const router = useRouter();
 const route = useRoute();

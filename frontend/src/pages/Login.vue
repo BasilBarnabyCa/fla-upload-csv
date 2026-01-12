@@ -1,12 +1,15 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen flex flex-col items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div>
-        <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          Application Status Updater
+        <div class="flex justify-center mb-4">
+          <img :src="logo" alt="Logo" class="h-16 w-auto" />
+        </div>
+        <h2 class="text-center text-3xl font-extrabold text-gray-900">
+          Status Portal
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600">
-          Sign in to manage application status updates
+          Authentication
         </p>
       </div>
       <form class="mt-8 space-y-6" @submit.prevent="handleLogin">
@@ -58,6 +61,9 @@
         </div>
       </form>
     </div>
+    <footer class="mt-auto py-4 text-center text-sm text-gray-600">
+      <p>&copy; {{ new Date().getFullYear() }} Status Portal. All rights reserved.</p>
+    </footer>
   </div>
 </template>
 
@@ -66,6 +72,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { login } from '../apiClient.js';
 import Alert from '../components/Alert.vue';
+import logo from '../assets/logo.png';
 
 const router = useRouter();
 const username = ref('');
