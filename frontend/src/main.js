@@ -12,22 +12,22 @@ const routes = [
   { 
     path: '/login', 
     component: Login,
-    meta: { requiresAuth: false }
+    meta: { requiresAuth: false, title: 'Login - Status Portal' }
   },
   { 
     path: '/', 
     component: UploadCsv,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true, title: 'Upload - Status Portal' }
   },
   {
     path: '/users',
     component: Users,
-    meta: { requiresAuth: true, requiresAdmin: true }
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Users - Status Portal' }
   },
   {
     path: '/audit',
     component: AuditTrail,
-    meta: { requiresAuth: true, requiresAdmin: true }
+    meta: { requiresAuth: true, requiresAdmin: true, title: 'Audit Trail - Status Portal' }
   }
 ];
 
@@ -37,6 +37,13 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
+  // Update document title
+  if (to.meta.title) {
+    document.title = to.meta.title;
+  } else {
+    document.title = 'Status Portal';
+  }
+  
   if (to.meta.requiresAuth && !isAuthenticated()) {
     next('/login');
   } else if (to.meta.requiresAdmin && !isAdmin()) {
