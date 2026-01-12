@@ -201,10 +201,10 @@ export async function checkTodaysUploads() {
  * Delete all uploads for today (or specified date)
  */
 export async function deleteTodaysUploads(date = null) {
-  const response = await fetch(`${API_BASE}/uploads/delete-today`, {
-    method: 'POST',
+  const response = await fetch(`${API_BASE}/uploads/today`, {
+    method: 'DELETE',
     headers: getHeaders(),
-    body: JSON.stringify(date ? { date } : {})
+    body: date ? JSON.stringify({ date }) : undefined
   });
 
   if (!response.ok) {
