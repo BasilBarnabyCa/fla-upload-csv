@@ -108,7 +108,7 @@ router.post('/sas', async (req, res) => {
       uploadId: uploadSession.id,
       fileId: uploadFile.id,
       sasUrl,
-      expiresAt: expiresAtISO,
+      expiresAt, // Already an ISO string from generateSASUrl
       blobPath
     });
   } catch (error) {
