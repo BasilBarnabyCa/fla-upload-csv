@@ -132,6 +132,7 @@
 import { ref, onMounted } from 'vue';
 import Alert from '../components/Alert.vue';
 import { getAuditLogs } from '../apiClient.js';
+import { formatBusinessDateTime } from '../utils/timezone.js';
 
 const logs = ref([]);
 const loading = ref(false);
@@ -150,8 +151,7 @@ const filters = ref({
 
 function formatDateTime(dateString) {
   if (!dateString) return 'N/A';
-  const date = new Date(dateString);
-  return date.toLocaleString('en-US', {
+  return formatBusinessDateTime(dateString, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

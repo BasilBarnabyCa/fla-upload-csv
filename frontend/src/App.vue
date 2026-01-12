@@ -3,7 +3,7 @@
     <header v-if="showHeader" class="bg-white shadow-sm">
       <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
         <div class="flex items-center space-x-6">
-          <h1 class="text-2xl font-semibold text-gray-900">FLA CSV Upload Tool</h1>
+          <h1 class="text-2xl font-semibold text-gray-900">Application Status Updater</h1>
           <nav class="flex space-x-4">
             <router-link
               to="/"

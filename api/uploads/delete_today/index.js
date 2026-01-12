@@ -4,6 +4,7 @@ import { validateAuth } from '../../shared/auth.js';
 import { deleteTodaysBlobs } from '../../shared/blob.js';
 import { handleError, ValidationError } from '../../shared/errors.js';
 import { logAuditEvent } from '../../shared/audit.js';
+import { getBusinessDate } from '../../shared/timezone.js';
 
 app.http('uploads_delete_today', {
   methods: ['POST', 'OPTIONS'],
@@ -28,10 +29,11 @@ app.http('uploads_delete_today', {
         // Empty body is okay
       }
 
-      const { date } = body; // Optional: YYYY-MM-DD format
+      const { date } = body; // Optional: YYYY-MM-DD format in business timezone
 
-      // Delete blobs for specified date (or today)
+      // Delete blobs for specified date (or today in business timezone)
       const deletedCount = await deleteTodaysBlobs(date);
+      const todayDate = date || getBusinessDate();
 
       // Audit log
       await logAuditEvent({
@@ -39,7 +41,7 @@ app.http('uploads_delete_today', {
         request,
         details: {
           deletedBy: tokenPayload.username,
-          date: date || new Date().toISOString().split('T')[0],
+          date: todayDate,
           deletedCount
         }
       });
@@ -49,7 +51,7 @@ app.http('uploads_delete_today', {
         headers: corsResult.headers,
         jsonBody: {
           deleted: deletedCount,
-          date: date || new Date().toISOString().split('T')[0],
+          date: todayDate,
           message: `Deleted ${deletedCount} file${deletedCount !== 1 ? 's' : ''}`
         }
       };

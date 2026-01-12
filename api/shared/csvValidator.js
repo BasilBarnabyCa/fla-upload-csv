@@ -3,6 +3,8 @@
  * Validates CSV files against the specification in docs/csv-specification.md
  */
 
+import { getBusinessDate } from './timezone.js';
+
 const REQUIRED_COLUMNS = [
   'appli_no',
   'Licence_Type',
@@ -333,11 +335,9 @@ export function validateCSV(fileContent, originalFilename) {
     }
   }
 
-  // Generate suggested filename (YYYYMMDD.csv)
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, '0');
-  const day = String(today.getDate()).padStart(2, '0');
+  // Generate suggested filename (YYYYMMDD.csv) using business timezone
+  const businessDate = getBusinessDate();
+  const [year, month, day] = businessDate.split('-');
   const suggestedFilename = `${year}${month}${day}.csv`;
 
   return {

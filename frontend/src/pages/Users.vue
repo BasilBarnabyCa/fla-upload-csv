@@ -256,6 +256,7 @@
 import { ref, onMounted } from 'vue';
 import { getUsers, createUser, updateUser, deleteUser, resetUserPassword, getUserRole } from '../apiClient.js';
 import Alert from '../components/Alert.vue';
+import { formatBusinessDate } from '../utils/timezone.js';
 
 function getRoleBadgeClass(role) {
   if (role === 'SUPERADMIN') return 'bg-red-100 text-red-800';
@@ -353,11 +354,16 @@ async function handleResetPassword() {
   try {
     loading.value = true;
     errorMessage.value = null;
+    
+    // Store username before resetting (in case API doesn't return it)
+    const username = userToResetPassword.value.username;
+    const role = userToResetPassword.value.role;
+    
     const result = await resetUserPassword(userToResetPassword.value.id);
     generatedPassword.value = result.password;
     passwordUserInfo.value = {
-      username: result.username,
-      role: userToResetPassword.value.role
+      username: result.username || username, // Use API response, fallback to stored username
+      role: role
     };
     showPasswordModal.value = true;
     userToResetPassword.value = null;
@@ -467,11 +473,7 @@ function copyPassword() {
 }
 
 function formatDate(dateString) {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
+  return formatBusinessDate(dateString);
 }
 
 function canEditUser(user) {

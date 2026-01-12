@@ -3,6 +3,7 @@ import { handleCORS } from '../../shared/cors.js';
 import { validateAuth } from '../../shared/auth.js';
 import { getContainerClient } from '../../shared/blob.js';
 import { handleError } from '../../shared/errors.js';
+import { getBusinessDate } from '../../shared/timezone.js';
 
 app.http('uploads_check_today', {
   methods: ['GET', 'OPTIONS'],
@@ -19,8 +20,8 @@ app.http('uploads_check_today', {
       // Validate auth
       validateAuth(request);
 
-      // Get today's date
-      const today = new Date().toISOString().split('T')[0];
+      // Get today's date in business timezone
+      const today = getBusinessDate();
       const prefix = `${today}/`;
 
       // List blobs for today

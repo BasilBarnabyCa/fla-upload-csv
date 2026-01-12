@@ -1,4 +1,5 @@
 import { BlobSASPermissions, BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters } from '@azure/storage-blob';
+import { getBusinessDate } from './timezone.js';
 
 const ACCOUNT_NAME = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const ACCOUNT_KEY = process.env.AZURE_STORAGE_ACCOUNT_KEY;
@@ -18,10 +19,11 @@ const blobServiceClient = new BlobServiceClient(
 /**
  * Generate a server-controlled blob path
  * Structure: YYYY-MM-DD/{uuid}.csv
+ * Uses business timezone (America/Bogota) for date-based folders
  * This creates date-based folders for easy organization and cleanup
  */
 export function generateBlobPath(originalName) {
-  const date = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  const date = getBusinessDate(); // YYYY-MM-DD format in business timezone
   const uuid = crypto.randomUUID();
   const ext = originalName.substring(originalName.lastIndexOf('.'));
   // Don't include container name in path - it's already in the container
@@ -62,11 +64,11 @@ export function getContainerClient() {
 
 /**
  * Delete all blobs for a specific date (optional cleanup)
- * @param {string} date - Date in YYYY-MM-DD format (defaults to today)
+ * @param {string} date - Date in YYYY-MM-DD format in business timezone (defaults to today)
  * @returns {Promise<number>} Number of blobs deleted
  */
 export async function deleteTodaysBlobs(date = null) {
-  const targetDate = date || new Date().toISOString().split('T')[0];
+  const targetDate = date || getBusinessDate(); // Use business timezone date
   const prefix = `${targetDate}/`; // Path format: YYYY-MM-DD/{uuid}.csv
   
   const containerClient = getContainerClient();

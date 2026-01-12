@@ -250,6 +250,7 @@ import {
   checkTodaysUploads,
   deleteTodaysUploads
 } from '../apiClient.js';
+import { formatBusinessDateTime, getBusinessDate } from '../utils/timezone.js';
 
 const selectedFile = ref(null);
 const uploading = ref(false);
@@ -306,7 +307,7 @@ function formatFileSize(bytes) {
 
 function formatDate(dateString) {
   if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleString();
+  return formatBusinessDateTime(dateString);
 }
 
 function showAlert(message, type = 'error') {
@@ -350,10 +351,8 @@ async function validateFile(file) {
     // Basic validation only for large files
     // For large files, we can't send the entire file for validation due to request size limits
     // Full validation will happen after upload from blob storage
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
+    const businessDate = getBusinessDate();
+    const [year, month, day] = businessDate.split('-');
     const suggestedFilename = `${year}${month}${day}.csv`;
     
     // Try to read first chunk to count rows (up to 5MB for better accuracy)
