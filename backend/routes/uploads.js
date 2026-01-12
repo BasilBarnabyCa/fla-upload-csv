@@ -277,7 +277,7 @@ router.post('/complete', async (req, res) => {
               data: {
                 etag,
                 sha256,
-                validatedAt: new Date()
+                uploadedAt: new Date()
               }
             }
           }
